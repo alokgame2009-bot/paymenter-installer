@@ -1,0 +1,5 @@
+paymenter-installer-backups/
+*.log
+.env
+*.env.*
+.DS_Store
