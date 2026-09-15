@@ -74,13 +74,13 @@ prompt_config() {
   echo
 
   while true; do
-    read -r -p "Domain: " DOMAIN < /dev/tty
+    read -r -p "Domain [e.g. https://billing.example.com]: " DOMAIN < /dev/tty
     DOMAIN="${DOMAIN#http://}"; DOMAIN="${DOMAIN#https://}"; DOMAIN="${DOMAIN%%/*}"
     if [[ -n "$DOMAIN" && "$DOMAIN" =~ ^[A-Za-z0-9.-]+$ ]]; then break; fi
     warn "Invalid domain. Please enter a valid domain and try again."
   done
   while true; do
-    read -r -p "Company Name: " COMPANY < /dev/tty
+    read -r -p "Company Name [e.g. SkylerNodes]: " COMPANY < /dev/tty
     [[ -n "${COMPANY//[[:space:]]/}" ]] && break
     warn "Company name cannot be empty. Please try again."
   done
@@ -95,24 +95,24 @@ prompt_config() {
     warn "Invalid last name. Please try again."
   done
   while true; do
-    read -r -p "Email Address: " ADMIN_EMAIL < /dev/tty
+    read -r -p "Email Address [e.g. admin@example.com]: " ADMIN_EMAIL < /dev/tty
     [[ "$ADMIN_EMAIL" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]] && break
     warn "Invalid email address. Please try again."
   done
   while true; do
-    read -r -s -p "Account Password: " ADMIN_PASS < /dev/tty; echo
+    read -r -s -p "Account Password [e.g. StrongPass123!]: " ADMIN_PASS < /dev/tty; echo
     if [[ ${#ADMIN_PASS} -ge 8 ]]; then break; fi
     warn "Password must be at least 8 characters. Please try again."
     ADMIN_PASS=""
   done
   while true; do
-    read -r -p "Account Type (admin/user) [admin]: " ACCOUNT_TYPE < /dev/tty
+    read -r -p "Account Type (admin/user) [e.g. admin]: " ACCOUNT_TYPE < /dev/tty
     ACCOUNT_TYPE="${ACCOUNT_TYPE,,}"; [[ -z "$ACCOUNT_TYPE" ]] && ACCOUNT_TYPE="admin"
     [[ "$ACCOUNT_TYPE" == "admin" || "$ACCOUNT_TYPE" == "user" ]] && break
     warn "Account type must be admin or user. Please try again."
   done
   while true; do
-    read -r -p "Let's Encrypt Email: " LE_EMAIL < /dev/tty
+    read -r -p "Let's Encrypt Email [e.g. admin@example.com]: " LE_EMAIL < /dev/tty
     [[ "$LE_EMAIL" =~ ^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$ ]] && break
     warn "Invalid Let's Encrypt email. Please try again."
   done
@@ -453,16 +453,20 @@ show_menu() {
 
   case "$MENU_CHOICE" in
     1)
-      install & local_pid=$!
-      loading "Starting Paymenter installation" "$local_pid"
-      wait "$local_pid" || true
-      echo; printf '%b\n' "${C3}Installation process finished. Returning to main menu...${NC}"; sleep 1
+      if install; then
+        echo; printf '%b\n' "${C3}Installation process finished. Returning to main menu...${NC}"
+      else
+        echo; printf '%b\n' "${C1}Installation stopped safely. Returning to main menu...${NC}"
+      fi
+      sleep 1
       ;;
     2)
-      uninstall & local_pid=$!
-      loading "Starting Paymenter uninstall" "$local_pid"
-      wait "$local_pid" || true
-      echo; printf '%b\n' "${C3}Uninstall process finished. Returning to main menu...${NC}"; sleep 1
+      if uninstall; then
+        echo; printf '%b\n' "${C3}Uninstall process finished. Returning to main menu...${NC}"
+      else
+        echo; printf '%b\n' "${C1}Uninstall stopped safely. Returning to main menu...${NC}"
+      fi
+      sleep 1
       ;;
     3)
       printf '%b\n' "${C3}Goodbye. Made by Zyren.${NC}"; exit 0
@@ -471,6 +475,18 @@ show_menu() {
       printf '%b\n' "${C1}Invalid option. Please select 1, 2, or 3.${NC}"; sleep 1
       ;;
   esac
+}
+
+run_step() {
+  local label="$1"; shift
+  "$@" &
+  local pid=$!
+  loading "$label" "$pid"
+  if ! wait "$pid"; then
+    warn "$label failed. Returning to the main menu."
+    return 1
+  fi
+  return 0
 }
 
 install() {
@@ -501,19 +517,19 @@ install() {
 
     # Database/migrations already completed in the failed run. Re-apply the
     # credentials and safely run migrations/seeding again (Laravel is idempotent).
-    setup_database
+    if ! run_step "Configuring Paymenter database" setup_database; then return 1; fi
   else
     prompt_config
-    install_packages
-    install_paymenter
-    setup_database
+    if ! run_step "Installing prerequisites" install_packages; then return 1; fi
+    if ! run_step "Downloading Paymenter" install_paymenter; then return 1; fi
+    if ! run_step "Configuring Paymenter database" setup_database; then return 1; fi
   fi
 
-  run_interactive_init
-  setup_cron_and_queue
-  setup_nginx_http
-  setup_ssl
-  finalize
+  if ! run_step "Initializing Paymenter" run_interactive_init; then return 1; fi
+  if ! run_step "Configuring queue and scheduler" setup_cron_and_queue; then return 1; fi
+  if ! run_step "Configuring Nginx" setup_nginx_http; then return 1; fi
+  if ! run_step "Configuring SSL" setup_ssl; then return 1; fi
+  if ! run_step "Finalizing Paymenter" finalize; then return 1; fi
 }
 
 while true; do
