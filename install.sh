@@ -521,16 +521,16 @@ show_menu() {
   C4="$(random_rgb)"; C5="$(random_rgb)"; C6="$(random_rgb)"; C7="$(random_rgb)"
 
   echo
-  printf '%b\n' "${C1}        ███████╗██╗  ██╗███╗   ██╗${NC}"
-  printf '%b\n' "${C2}        ██╔════╝██║  ██║████╗  ██║${NC}"
-  printf '%b\n' "${C3}        ███████╗█████╔╝██╔██╗ ██║${NC}"
-  printf '%b\n' "${C4}        ╚════██║██╔═██╗ ██║╚██╗██║${NC}"
-  printf '%b\n' "${C5}        ███████║██║  ██╗██║ ╚████╔╝${NC}"
-  printf '%b\n' "${C6}        ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝${NC}"
+  printf '%b\n' "${C1}███╗   ██╗███████╗██╗  ██╗██╗   ██╗ ██████╗ ███╗   ██╗${NC}"
+  printf '%b\n' "${C2}████╗  ██║██╔════╝╚██╗██╔╝╚██╗ ██╔╝██╔═══██╗████╗  ██║${NC}"
+  printf '%b\n' "${C3}██╔██╗ ██║█████╗   ╚███╔╝  ╚████╔╝ ██║   ██║██╔██╗ ██║${NC}"
+  printf '%b\n' "${C4}██║╚██╗██║██╔══╝   ██╔██╗   ╚██╔╝  ██║   ██║██║╚██╗██║${NC}"
+  printf '%b\n' "${C5}██║ ╚████║███████╗██╔╝ ██╗   ██║   ╚██████╔╝██║ ╚████║${NC}"
+  printf '%b\n' "${C6}╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═══╝${NC}"
   echo
-  printf '%b\n' "${C7}                 N E X Y O N${NC}"
-  printf '%b\n' "${C1}          PAYMENTER INSTALLER${NC}"
-  printf '%b\n' "${C2}       Secure • Fast • Automated${NC}"
+  printf '%b\n' "${C7}                  N E X Y O N${NC}"
+  printf '%b\n' "${C1}              PAYMENTER INSTALLER${NC}"
+  printf '%b\n' "${C2}           Secure • Fast • Automated${NC}"
   echo
   printf '%b\n' "${C3}                  Made by Hiro${NC}"
   echo
